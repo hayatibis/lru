@@ -93,6 +93,17 @@ func TestSet_updateEvictsDueToSize(t *testing.T) {
 	}
 }
 
+func TestSet_driftedCounterDoesNotSpin(t *testing.T) {
+	c, _ := NewLruCache(100, 10)
+	c.Set("a", make([]byte, 10))
+	c.inUseSize += 1000 // a counter that drifted
+
+	setWithTimeout(t, c, "b", make([]byte, 10))
+	if c.inUseSize != 0 {
+		t.Errorf("expecting inUseSize 0 after emptying the list, got %d", c.inUseSize)
+	}
+}
+
 func TestNewLruCache(t *testing.T) {
 	_, err := NewLruCache(0, 0)
 	if err != ErrInvalidMaxSize {
